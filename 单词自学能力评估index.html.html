@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单词自学能力评估</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background: #e0e0e0;
+            margin-bottom: 20px;
+        }
+        
+        .progress {
+            height: 100%;
+            background: #4CAF50;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .question-container {
+            padding: 30px;
+        }
+        
+        .question {
+            display: none;
+        }
+        
+        .question.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .question h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+            line-height: 1.5;
+        }
+        
+        .question .module {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 14px;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+        
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .option {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .option:hover {
+            border-color: #4facfe;
+            background: #f8fdff;
+        }
+        
+        .option.selected {
+            border-color: #4CAF50;
+            background: #e8f5e8;
+        }
+        
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #666;
+            margin-right: 10px;
+        }
+        
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        
+        .report-container {
+            display: none;
+            padding: 30px;
+        }
+        
+        .report-section {
+            margin-bottom: 40px;
+            page-break-inside: avoid;
+        }
+        
+        .radar-container {
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
+        }
+        
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .score-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .score-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4facfe;
+            margin: 5px 0;
+        }
+        
+        .score-label {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .diagnosis-item {
+            background: #fff3e0;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #ff9800;
+        }
+        
+        .suggestion-item {
+            background: #e8f5e8;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #4caf50;
+        }
+        
+        .qrcode-container {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        #qrcode {
+            display: inline-block;
+            margin: 15px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .question-container {
+                padding: 20px;
+            }
+            
+            .score-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* 打印样式 */
+        @media print {
+            body {
+                background: white !important;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none !important;
+                margin: 0 !important;
+                border-radius: 0 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .header {
+                background: #4facfe !important;
+                -webkit-print-color-adjust: exact;
+            }
+            .report-section {
+                break-inside: avoid;
+            }
+        }
+        
+        .share-section {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>英语单词自学能力综合评估系统</h1>
+            <p>发现你的单词学习潜力，获取个性化提升方案</p>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+        
+        <!-- 测评问卷部分 -->
+        <div class="question-container" id="questionnaire">
+            <form id="assessment-form">
+                <!-- 问题将在这里动态生成 -->
+            </form>
+            
+            <div class="navigation">
+                <button class="btn btn-secondary" id="prev-btn" style="display: none;">上一题</button>
+                <button class="btn btn-primary" id="next-btn">下一题</button>
+            </div>
+        </div>
+        
+        <!-- 测评报告部分 -->
+        <div class="report-container" id="report">
+            <!-- 报告内容将在这里动态生成 -->
+        </div>
+    </div>
+
+    <script>
+        // 完整的测评数据结构
+        const assessmentData = {
+            questions: [
+                {
+                    id: 1,
+                    module: "学者画像",
+                    text: "您目前的学习阶段是？",
+                    type: "single",
+                    options: [
+                        { id: "A", text: "小学生" },
+                        { id: "B", text: "初中生" },
+                        { id: "C", text: "高中生" },
+                        { id: "D", text: "大学生/成人" }
+                    ],
+                    scoring: {
+                        dimension: "potential",
+                        values: { A: 10, B: 15, C: 20, D: 25 }
+                    }
+                },
+                {
+                    id: 2,
+                    module: "学者画像",
+                    text: "您当前英语学习中最大的困扰是？",
+                    type: "multiple",
+                    options: [
+                        { id: "A", text: "单词记不住，忘得快" },
+                        { id: "B", text: "会写不会读，口语差" },
+                        { id: "C", text: "看到长单词就发怵，直接放弃" },
+                        { id: "D", text: "听力差，因为单词读音和脑子里的对不上" },
+                        { id: "E", text: "学习效率低，耗时耗力没效果" },
+                        { id: "F", text: "其他" }
+                    ],
+                    scoring: {
+                        dimension: "habits",
+                        values: { A: -5, B: -5, C: -5, D: -5, E: -5 }
+                    }
+                },
+                {
+                    id: 3,
+                    module: "核心能力诊断",
+                    text: "请您尝试拼读以下单词，并指出哪种发音组合是正确的：",
+                    type: "single",
+                    conditional: true,
+                    condition: { question: 1, values: ["A", "B"] },
+                    options: [
+                        { id: "A", text: "/'tɑːbl/" },
+                        { id: "B", text: "/'teɪbl/", correct: true },
+                        { id: "C", text: "/'tæbl/" },
+                        { id: "D", text: "我不确定" }
+                    ],
+                    scoring: {
+                        dimension: "pronunciation",
+                        values: { A: 0, B: 20, C: 0, D: 5 }
+                    }
+                },
+                {
+                    id: 4,
+                    module: "核心能力诊断",
+                    text: "以下哪个单词中的“ea”发 /iː/ 的音？",
+                    type: "single",
+                    conditional: true,
+                    condition: { question: 1, values: ["A", "B"] },
+                    options: [
+                        { id: "A", text: "great" },
+                        { id: "B", text: "bread" },
+                        { id: "C", text: "teach", correct: true },
+                        { id: "D", text: "bear" }
+                    ],
+                    scoring: {
+                        dimension: "pronunciation",
+                        values: { A: 0, B: 0, C: 20, D: 0 }
+                    }
+                },
+                {
+                    id: 5,
+                    module: "核心能力诊断",
+                    text: "当您遇到一个新单词如 \"metamorphosis\" 时，您会如何尝试读出它？",
+                    type: "single",
+                    conditional: true,
+                    condition: { question: 1, values: ["C", "D"] },
+                    options: [
+                        { id: "A", text: "尝试分音节逐个拼读。" },
+                        { id: "B", text: "查词典听发音。" },
+                        { id: "C", text: "猜测，或者直接跳过。" },
+                        { id: "D", text: "尝试根据词根词缀结构猜测。" }
+                    ],
+                    scoring: {
+                        dimension: "pronunciation",
+                        values: { A: 15, B: 10, C: 0, D: 20 }
+                    }
+                },
+                {
+                    id: 6,
+                    module: "核心能力诊断",
+                    text: "当遇到陌生单词 \"photography\" 时，您会怎么做？",
+                    type: "single",
+                    options: [
+                        { id: "A", text: "跳过不管" },
+                        { id: "B", text: "查电子词典听发音" },
+                        { id: "C", text: "根据\"photo\"和\"graph\"尝试拼读" },
+                        { id: "D", text: "用音标拼读" }
+                    ],
+                    scoring: {
+                        dimension: "rules",
+                        values: { A: 0, B: 10, C: 15, D: 20 }
+                    }
+                },
+                {
+                    id: 7,
+                    module: "核心能力诊断",
+                    text: "您认为单词 \"sign\" 中的 \"g\" 发音吗？",
+                    type: "single",
+                    options: [
+                        { id: "A", text: "发音" },
+                        { id: "B", text: "不发音", correct: true },
+                        { id: "C", text: "不清楚" }
+                    ],
+                    scoring: {
+                        dimension: "pronunciation",
+                        values: { A: 0, B: 20, C: 5 }
+                    }
+                },
+                {
+                    id: 8,
+                    module: "核心能力诊断",
+                    text: "划分 \"important\" 的音节，您认为正确的是？",
+                    type: "single",
+                    options: [
+                        { id: "A", text: "im-por-tant", correct: true },
+                        { id: "B", text: "imp-ort-ant" },
+                        { id: "C", text: "不会划分" }
+                    ],
+                    scoring: {
+                        dimension: "syllable",
+                        values: { A: 20, B: 10, C: 0 }
+                    }
+                },
+                {
+                    id: 9,
+                    module: "核心能力诊断",
+                    text: "单词 \"unhappy\" 中的 \"un-\" 通常表示什么意思？",
+                    type: "single",
+                    options: [
+                        { id: "A", text: "强调" },
+                        { id: "B", text: "反义", correct: true },
+                        { id: "C", text: "小的" },
+                        { id: "D", text: "过去" }
+                    ],
+                    scoring: {
+                        dimension: "rules",
+                        values: { A: 0, B: 20, C: 0, D: 0 }
+                    }
+                },
+                {
+                    id: 10,
+                    module: "学习方法审计",
+                    text: "您记忆单词\"necessary\"的主要方式是？",
+                    type: "single",
+                    options: [
+                        { id: "A", text: "n-e-c-e-s-s-a-r-y 死记硬背" },
+                        { id: "B", text: "编口诀/谐音记忆" },
+                        { id: "C", text: "根据发音规则/音节记忆" },
+                        { id: "D", text: "在阅读中自然记忆" },
+                        { id: "E", text: "其他 (请简述)" }
+                    ],
+                    scoring: {
+                        dimension: "habits",
+                        values: { A: 0, B: 10, C: 20, D: 15, E: 5 }
+                    }
+                },
+                {
+                    id: 11,
+                    module: "学习方法审计",
+                    text: "您在背诵新单词后，通常多久会进行复习？",
+                    type: "single",
+                    options: [
+                        { id: "A", text: "不复习，下次遇到再说" },
+                        { id: "B", text: "几小时内/当天" },
+                        { id: "C", text: "几天后/一周内" },
+                        { id: "D", text: "每天坚持复习" }
+                    ],
+                    scoring: {
+                        dimension: "habits",
+                        values: { A: 0, B: 20, C: 10, D: 15 }
+                    }
+                },
+                {
+                    id: 12,
+                    module: "学习方法审计",
+                    text: "您认为学好单词最关键的是什么？",
+                    type: "single",
+                    options: [
+                        { id: "A", text: "刻苦重复" },
+                        { id: "B", text: "好的方法" },
+                        { id: "C", text: "语言环境" },
+                        { id: "D", text: "老师指导" }
+                    ],
+                    scoring: {
+                        dimension: "potential",
+                        values: { A: 10, B: 20, C: 15, D: 5 }
+                    }
+                },
+                {
+                    id: 13,
+                    module: "目标与承诺",
+                    text: "如果有一套方法能让您\"见词能读，听词能写，高效记忆\"，您愿意投入多少时间学习？",
+                    type: "single",
+                    options: [
+                        { id: "A", text: "只要有效，愿意系统学习并投入时间" },
+                        { id: "B", text: "看看效果再说，可以少量尝试" },
+                        { id: "C", text: "没时间，想快速见效" },
+                        { id: "D", text: "对此不感兴趣" }
+                    ],
+                    scoring: {
+                        dimension: "potential",
+                        values: { A: 25, B: 15, C: 5, D: 0 }
+                    }
+                },
+                {
+                    id: 14,
+                    module: "目标与承诺",
+                    text: "您希望在未来3个月内，在单词学习上实现的最重要突破是？",
+                    type: "open",
+                    scoring: {
+                        dimension: "potential",
+                        baseScore: 10
+                    }
+                }
+            ]
+        };
+
+        let currentQuestion = 0;
+        let answers = {};
+        let userProfile = { name: "学员" };
+        let radarChart = null;
+
+        // 初始化应用
+        function initApp() {
+            renderQuestion(currentQuestion);
+            updateProgress();
+        }
+
+        // 获取应该显示的问题列表
+        function getVisibleQuestions() {
+            return assessmentData.questions.filter(question => {
+                if (!question.conditional) return true;
+                
+                const condition = question.condition;
+                const answer = answers[condition.question];
+                return answer && condition.values.includes(answer[0]);
+            });
+        }
+
+        // 渲染问题
+        function renderQuestion(index) {
+            const form = document.getElementById('assessment-form');
+            form.innerHTML = '';
+            
+            const visibleQuestions = getVisibleQuestions();
+            if (index >= visibleQuestions.length) {
+                generateReport();
+                return;
+            }
+            
+            const question = visibleQuestions[index];
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'question active';
+            
+            let optionsHTML = '';
+            if (question.type === 'open') {
+                optionsHTML = `
+                    <textarea style="width: 100%; height: 100px; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; resize: vertical;" 
+                              placeholder="请简要描述您的学习目标..."></textarea>
+                `;
+            } else {
+                optionsHTML = question.options.map(option => `
+                    <div class="option" data-value="${option.id}">
+                        ${option.id}. ${option.text}
+                    </div>
+                `).join('');
+            }
+            
+            questionDiv.innerHTML = `
+                <div class="module">${question.module}</div>
+                <h3>${question.text}</h3>
+                <div class="options" id="options-${question.id}">
+                    ${optionsHTML}
+                </div>
+            `;
+            
+            form.appendChild(questionDiv);
+            
+            // 添加选项点击事件（非开放题）
+            if (question.type !== 'open') {
+                const options = questionDiv.querySelectorAll('.option');
+                options.forEach(option => {
+                    option.addEventListener('click', function() {
+                        if (question.type === 'single') {
+                            options.forEach(opt => opt.classList.remove('selected'));
+                            this.classList.add('selected');
+                        } else {
+                            this.classList.toggle('selected');
+                        }
+                    });
+                });
+            }
+            
+            // 恢复已选择的答案
+            if (answers[question.id]) {
+                if (question.type === 'open') {
+                    const textarea = questionDiv.querySelector('textarea');
+                    if (textarea) textarea.value = answers[question.id][0];
+                } else {
+                    answers[question.id].forEach(answer => {
+                        const option = questionDiv.querySelector(`[data-value="${answer}"]`);
+                        if (option) option.classList.add('selected');
+                    });
+                }
+            }
+            
+            updateNavigation();
+        }
+
+        // 更新导航按钮
+        function updateNavigation() {
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const visibleQuestions = getVisibleQuestions();
+            
+            prevBtn.style.display = currentQuestion > 0 ? 'block' : 'none';
+            
+            if (currentQuestion === visibleQuestions.length - 1) {
+                nextBtn.textContent = '查看报告';
+            } else {
+                nextBtn.textContent = '下一题';
+            }
+        }
+
+        // 更新进度条
+        function updateProgress() {
+            const progress = document.getElementById('progress');
+            const visibleQuestions = getVisibleQuestions();
+            const progressPercent = (currentQuestion / visibleQuestions.length) * 100;
+            progress.style.width = progressPercent + '%';
+        }
+
+        // 保存答案
+        function saveAnswer() {
+            const visibleQuestions = getVisibleQuestions();
+            const question = visibleQuestions[currentQuestion];
+            
+            let selectedValues = [];
+            
+            if (question.type === 'open') {
+                const textarea = document.querySelector('textarea');
+                if (textarea) {
+                    selectedValues = [textarea.value];
+                }
+            } else {
+                const selectedOptions = document.querySelectorAll(`#options-${question.id} .option.selected`);
+                selectedValues = Array.from(selectedOptions).map(opt => opt.getAttribute('data-value'));
+            }
+            
+            answers[question.id] = selectedValues;
+            
+            // 更新用户画像
+            if (question.id === 1) {
+                userProfile.stage = selectedValues[0];
+            }
+        }
+
+        // 下一题
+        document.getElementById('next-btn').addEventListener('click', function() {
+            saveAnswer();
+            
+            const visibleQuestions = getVisibleQuestions();
+            if (currentQuestion === visibleQuestions.length - 1) {
+                generateReport();
+            } else {
+                currentQuestion++;
+                renderQuestion(currentQuestion);
+                updateProgress();
+            }
+        });
+
+        // 上一题
+        document.getElementById('prev-btn').addEventListener('click', function() {
+            currentQuestion--;
+            renderQuestion(currentQuestion);
+            updateProgress();
+        });
+
+        // 计算分数
+        function calculateScores() {
+            const scores = {
+                pronunciation: 0,
+                syllable: 0,
+                rules: 0,
+                habits: 0,
+                potential: 0
+            };
+            
+            const scoreCounts = {
+                pronunciation: 0,
+                syllable: 0,
+                rules: 0,
+                habits: 0,
+                potential: 0
+            };
+            
+            // 计算每个维度的总分和题目数量
+            assessmentData.questions.forEach(question => {
+                const answer = answers[question.id];
+                if (answer && answer.length > 0 && question.scoring) {
+                    const dimension = question.scoring.dimension;
+                    
+                    if (question.type === 'multiple') {
+                        // 多选题目，累加每个选项的分数
+                        answer.forEach(optionId => {
+                            if (question.scoring.values[optionId] !== undefined) {
+                                scores[dimension] += question.scoring.values[optionId];
+                                scoreCounts[dimension]++;
+                            }
+                        });
+                    } else if (question.type === 'open') {
+                        // 开放题目，给予基础分
+                        if (answer[0] && answer[0].trim().length > 0) {
+                            scores[dimension] += question.scoring.baseScore || 10;
+                            scoreCounts[dimension]++;
+                        }
+                    } else {
+                        // 单选题目
+                        const optionId = answer[0];
+                        if (question.scoring.values[optionId] !== undefined) {
+                            scores[dimension] += question.scoring.values[optionId];
+                            scoreCounts[dimension]++;
+                        }
+                    }
+                }
+            });
+            
+            // 计算平均分并归一化到0-100
+            Object.keys(scores).forEach(dimension => {
+                if (scoreCounts[dimension] > 0) {
+                    // 先计算平均分（基于题目数量）
+                    let avgScore = scores[dimension] / scoreCounts[dimension];
+                    
+                    // 归一化到0-100范围
+                    scores[dimension] = Math.min(100, Math.max(0, Math.round(avgScore * 2)));
+                } else {
+                    scores[dimension] = 50; // 默认值
+                }
+            });
+            
+            return scores;
+        }
+
+        // 生成雷达图
+        function createRadarChart(scores) {
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            
+            if (radarChart) {
+                radarChart.destroy();
+            }
+            
+            radarChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['拼读意识', '音节划分', '规则应用', '学习习惯', '提升潜力'],
+                    datasets: [{
+                        label: '能力评估',
+                        data: [
+                            scores.pronunciation,
+                            scores.syllable,
+                            scores.rules,
+                            scores.habits,
+                            scores.potential
+                        ],
+                        backgroundColor: 'rgba(79, 172, 254, 0.2)',
+                        borderColor: 'rgba(79, 172, 254, 1)',
+                        pointBackgroundColor: 'rgba(79, 172, 254, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(79, 172, 254, 1)'
+                    }]
+                },
+                options: {
+                    scales: {
+                        r: {
+                            angleLines: {
+                                display: true
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 100,
+                            ticks: {
+                                stepSize: 20
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // 生成诊断建议
+        function generateDiagnosis(scores) {
+            const diagnosis = [];
+            
+            // 拼读意识诊断
+            if (scores.pronunciation < 60) {
+                diagnosis.push({
+                    title: "音形对应规则掌握不足",
+                    description: "您的核心问题在于缺乏系统性的音形对应规则，导致'见词难读'、'听词难写'。这会影响您的流利阅读和准确听力。"
+                });
+            }
+            
+            // 音节划分诊断
+            if (scores.syllable < 50) {
+                diagnosis.push({
+                    title: "音节划分能力有待提升",
+                    description: "您在划分单词音节时遇到困难，这限制了您拼读长单词和理解单词结构的能力。"
+                });
+            }
+            
+            // 规则应用诊断
+            if (scores.rules < 60) {
+                diagnosis.push({
+                    title: "发音和构词规则应用不熟练",
+                    description: "您对常见发音规则和词根词缀的掌握程度需要加强，这影响了您通过规律记忆单词的效率。"
+                });
+            }
+            
+            // 学习习惯诊断
+            if (scores.habits < 50) {
+                diagnosis.push({
+                    title: "记忆策略与复习习惯需要优化",
+                    description: "您目前可能主要依靠低效的记忆方法，且复习频率不足，导致'记不住、忘得快'的问题。"
+                });
+            }
+            
+            return diagnosis;
+        }
+
+        // 生成学习建议
+        function generateSuggestions(scores, diagnosis) {
+            const suggestions = [];
+            
+            if (scores.pronunciation < 70) {
+                suggestions.push({
+                    title: "系统学习音形规则，开启'见词能读'",
+                    description: "掌握英语字母和字母组合的发音规律，学习音节划分方法，建立音形对应关系。"
+                });
+            }
+            
+            if (scores.rules < 70) {
+                suggestions.push({
+                    title: "学习词根词缀，理解单词构成",
+                    description: "掌握常见词根词缀的含义和用法，通过构词法理解和记忆单词，提高记忆效率。"
+                });
+            }
+            
+            if (scores.habits < 60) {
+                suggestions.push({
+                    title: "建立科学复习机制，巩固记忆成果",
+                    description: "了解艾宾浩斯遗忘曲线，制定合理的复习计划，利用碎片时间进行高效复习。"
+                });
+            }
+            
+            suggestions.push({
+                title: "结合多感官记忆，提升学习效果",
+                description: "将视觉、听觉、动觉相结合，通过读、写、听、说多种方式记忆单词。"
+            });
+            
+            return suggestions;
+        }
+
+        // 生成报告内容
+        function generateReportContent(scores) {
+            const totalScore = Object.values(scores).reduce((a, b) => a + b, 0) / 5;
+            const diagnosis = generateDiagnosis(scores);
+            const suggestions = generateSuggestions(scores, diagnosis);
+            
+            // 生成总体评价
+            let overallComment = "";
+            if (totalScore >= 80) {
+                overallComment = "您的单词自学能力整体表现优秀，在多个维度都有良好基础。";
+            } else if (totalScore >= 60) {
+                overallComment = "您具备一定的单词自学能力，但在某些关键领域还有提升空间。";
+            } else {
+                overallComment = "您的单词自学能力有较大提升空间，需要系统性地改进学习方法和习惯。";
+            }
+            
+            return `
+                <div class="report-section" style="text-align: center; padding: 40px 0;">
+                    <h1 style="color: #2c3e50; margin-bottom: 15px;">${userProfile.name}的英语单词自学能力评估报告</h1>
+                    <p style="color: #7f8c8d; font-size: 16px;">报告生成日期：${new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                    <p style="color: #3498db; margin-top: 20px; font-size: 18px;">赋能您的词汇之路，从了解自己开始！</p>
+                </div>
+                
+                <div class="report-section">
+                    <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">【第一部分：综合评分】</h2>
+                    
+                    <div class="radar-container">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                    
+                    <div class="score-grid">
+                        <div class="score-item">
+                            <div class="score-label">拼读意识</div>
+                            <div class="score-value">${scores.pronunciation}</div>
+                        </div>
+                        <div class="score-item">
+                            <div class="score-label">音节划分</div>
+                            <div class="score-value">${scores.syllable}</div>
+                        </div>
+                        <div class="score-item">
+                            <div class="score-label">规则应用</div>
+                            <div class="score-value">${scores.rules}</div>
+                        </div>
+                        <div class="score-item">
+                            <div class="score-label">学习习惯</div>
+                            <div class="score-value">${scores.habits}</div>
+                        </div>
+                        <div class="score-item">
+                            <div class="score-label">提升潜力</div>
+                            <div class="score-value">${scores.potential}</div>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 25px 0; padding: 20px; background: #e8f4fd; border-radius: 10px;">
+                        <h3 style="color: #2980b9; margin-bottom: 10px;">综合表现分析</h3>
+                        <p style="color: #2c3e50; line-height: 1.6;">${overallComment}从雷达图来看，您在<strong>${getLowestDimension(scores)}</strong>方面有较大的提升空间，但<strong>${getHighestDimension(scores)}</strong>得分较高，这是非常积极的信号！</p>
+                    </div>
+                </div>
+                
+                <div class="report-section">
+                    <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">【第二部分：核心问题诊断】</h2>
+                    <p style="margin: 20px 0; line-height: 1.6;">亲爱的${userProfile.name}，通过您的答题，我们为您诊断出以下核心问题：</p>
+                    
+                    ${diagnosis.map(item => `
+                        <div class="diagnosis-item">
+                            <h3 style="color: #e67e22; margin-bottom: 10px;">${item.title}</h3>
+                            <p style="line-height: 1.6; color: #2c3e50;">${item.description}</p>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div class="report-section">
+                    <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">【第三部分：个性化学习建议】</h2>
+                    <p style="margin: 20px 0; line-height: 1.6;">根据您的评估结果，我们为您提供以下针对性的学习建议：</p>
+                    
+                    ${suggestions.map((item, index) => `
+                        <div class="suggestion-item">
+                            <h3 style="color: #27ae60; margin-bottom: 10px;">${index + 1}. ${item.title}</h3>
+                            <p style="line-height: 1.6; color: #2c3e50;">${item.description}</p>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div class="share-section no-print">
+                    <h3 style="margin-bottom: 15px;">分享您的测评结果</h3>
+                    <p style="margin-bottom: 20px; opacity: 0.9;">扫描二维码，与朋友分享这个测评</p>
+                    <div id="qrcode"></div>
+                </div>
+                
+                <div class="no-print" style="text-align: center; margin: 40px 0;">
+                    <button class="btn btn-primary" onclick="window.print()">生成PDF报告</button>
+                    <button class="btn btn-secondary" onclick="restartAssessment()">重新测评</button>
+                </div>
+                
+                <div style="border-top: 1px solid #ddd; padding-top: 20px; margin-top: 40px; color: #666; font-size: 12px;">
+                    <p>版权声明：本报告内容仅供参考，最终学习评估及方案以1V1深度诊断结果为准。</p>
+                </div>
+            `;
+        }
+
+        // 获取最低分维度
+        function getLowestDimension(scores) {
+            let lowest = 100;
+            let lowestDim = '';
+            
+            Object.keys(scores).forEach(dim => {
+                if (scores[dim] < lowest) {
+                    lowest = scores[dim];
+                    lowestDim = dim;
+                }
+            });
+            
+            const dimMap = {
+                pronunciation: '拼读意识',
+                syllable: '音节划分',
+                rules: '规则应用',
+                habits: '学习习惯',
+                potential: '提升潜力'
+            };
+            
+            return dimMap[lowestDim] || '学习习惯';
+        }
+
+        // 获取最高分维度
+        function getHighestDimension(scores) {
+            let highest = 0;
+            let highestDim = '';
+            
+            Object.keys(scores).forEach(dim => {
+                if (scores[dim] > highest) {
+                    highest = scores[dim];
+                    highestDim = dim;
+                }
+            });
+            
+            const dimMap = {
+                pronunciation: '拼读意识',
+                syllable: '音节划分',
+                rules: '规则应用',
+                habits: '学习习惯',
+                potential: '提升潜力'
+            };
+            
+            return dimMap[highestDim] || '提升潜力';
+        }
+
+        // 生成报告
+        function generateReport() {
+            const scores = calculateScores();
+            const report = generateReportContent(scores);
+            
+            document.getElementById('questionnaire').style.display = 'none';
+            document.getElementById('report').style.display = 'block';
+            document.getElementById('report').innerHTML = report;
+            
+            // 创建雷达图
+            setTimeout(() => {
+                createRadarChart(scores);
+            }, 100);
+            
+            // 生成二维码
+            generateQRCode();
+        }
+
+        // 生成二维码
+        function generateQRCode() {
+            const currentUrl = window.location.href;
+            QRCode.toCanvas(document.getElementById('qrcode'), currentUrl, {
+                width: 150,
+                height: 150,
+                margin: 1,
+                color: {
+                    dark: '#2c3e50',
+                    light: '#ffffff'
+                }
+            }, function(error) {
+                if (error) console.error(error);
+            });
+        }
+
+        // 重新开始测评
+        function restartAssessment() {
+            currentQuestion = 0;
+            answers = {};
+            userProfile = { name: "学员" };
+            document.getElementById('report').style.display = 'none';
+            document.getElementById('questionnaire').style.display = 'block';
+            initApp();
+        }
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
